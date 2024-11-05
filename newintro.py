@@ -1,3 +1,4 @@
+##importing necessary modules
 import os
 import openai
 import dotenv
@@ -12,9 +13,12 @@ from crewai_tools import TXTSearchTool
 from crewai_tools import FileReadTool
 from crewai_tools import Tool
 import openai
+##loading environmentfile
 dotenv.load_dotenv()
+##function to check completion of each task of each agent
 def my_intermediate_step_callback(agent, task, step_info):
     st.write(f"Step reached in task: {task.description}, Agent: {agent.role}, Step info: {step_info}")
+##function to take human input for shepherd(medium)
 class ShepherdInputTool(Tool):
     def __init__(self):
         super().__init__(
@@ -35,7 +39,7 @@ file_read_tool = FileReadTool()
 file_paths1 = [
      '/home/shovan/Videos/shepherdpreassessment.txt',
 ]
-
+##agents are define one by one
 lessonplanner_agent = Agent(
     role="You are a LessonPlanner_Agent with extensive knowledge in geometry."
          "You are given a preassessmentfile of a human student,which is find in the {file_paths1}"
@@ -116,7 +120,8 @@ teachers_agent=Agent(
     verbose=True,
     memory=True,
     tools=[ file_read_tool,shepherd_input_tool] 
-)  
+)
+##tasks of agents are define one by one
 lessonplanner_docs_task= Task(
     description="You are a LessonPlanner_Agent with extensive knowledge in geometry."
          "You are given a preassessmentfile of a human student,which is find in the {file_paths1}"
@@ -174,6 +179,7 @@ teachers_docs_task= Task(
     llm = ChatOpenAI(temperature=0.75, model_name="gpt-4o"),
     step_callback=my_intermediate_step_callback
 )
+## crew is start action
 crew = Crew(
     agents=[lessonplanner_agent,assessor_agent,teachers_agent],
     tasks=[lessonplanner_docs_task,assessor_docs_task,teachers_docs_task],
@@ -183,4 +189,5 @@ crew = Crew(
 result=crew.kickoff(inputs={
     'file_paths1': '/home/shovan/Videos/shepherdpreassessment.txt'
 })
+##to show the output in streamlit
 st.write(result)
