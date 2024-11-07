@@ -1,5 +1,6 @@
 ##importing necessary modules
 import os
+import re
 import openai
 import dotenv
 import time
@@ -15,25 +16,8 @@ from crewai_tools import Tool
 import openai
 ##loading environmentfile
 dotenv.load_dotenv()
-##function to check completion of each task of each agent
 def my_intermediate_step_callback(agent, task, step_info):
-    st.write(f"Step reached in task: {task.description}, Agent: {agent.role}, Step info: {step_info}")
-##function to take human input for shepherd(medium)
-class ShepherdInputTool(Tool):
-    def __init__(self):
-        super().__init__(
-            name="Shepherd Input Tool",
-            description="Tool for collecting input from Shepherd (human student).",
-            func=self.get_shepherd_input
-        )
-
-    # Method to get input from Shepherd (human student)
-    def get_shepherd_input(self, message: str = "Please provide input:", **kwargs):
-        # Generate a unique key for the text input
-        unique_key = f"shepherd_input_{time.time()}"  # or use any unique identifier you prefer
-        return st.text_input(message, key=unique_key)
-# Initialize input tools
-shepherd_input_tool = ShepherdInputTool()
+    print(f"Step reached in task: {task.description}, Agent: {agent.role}, Step info: {step_info}")
 os.environ["OPENAI_MODEL_NAME"] = "gpt-4o"
 file_read_tool = FileReadTool()
 file_paths1 = [
@@ -41,86 +25,49 @@ file_paths1 = [
 ]
 ##agents are define one by one
 lessonplanner_agent = Agent(
-    role="You are a LessonPlanner_Agent with extensive knowledge in geometry."
-         "You are given a preassessmentfile of a human student,which is find in the {file_paths1}"
-         "you will read this preassessmentfile carefully and analyze to identify the questions the human student could not answer."
-         "Based on these unanswered questions, you will create an initial lesson plan and provide this initial lessonplan to the assessor_agent and teachers_agent"
-         "When the teachers_agent asks you to update the lesson plan,"
-         "you will revise it according to the human student's interests,"
-         "which the teachers_agent will provide to you."
-         "After updating, you will share the revised lesson plan with the teachers_agent.",
-    goal="You are a LessonPlanner_Agent with extensive knowledge in geometry."
-         "You are given a preassessmentfile of a human student,which is find in the {file_paths1}"
-         "you will read this preassessmentfile carefully and analyze to identify the questions the human student could not answer."
-         "Based on these unanswered questions, you will create an initial lesson plan."
-         "When the teachers_agent asks you to update the lesson plan,"
-         "you will revise it according to the human student's interests,"
-         "which the teachers_agent will provide to you."
-         "After updating, you will share the revised lesson plan with the teachers_agent.",
+    role="You are a LessonPlanner_Agent with extensive knowledge in geometry.who can provide appropriate lessonplan for student of class 9,whose preassessmentfile is present in {file_paths1} on triangles and their different types and theorem",
+    goal="You have to provide initial lessonlan based on the topics not understood by the student as can be seen from the preassessmentfile found in {file_paths1}."
+         "you will modify this lessonplan based on the request of a tecahers_agent as needed to match the student's requirements",
     backstory= "You are a LessonPlanner_Agent with extensive knowledge in geometry."
-         "You are given a preassessmentfile of a human student,which is find in the {file_paths1}"
+         "You are given a preassessmentfile of a human student,which is found in the {file_paths1}"
          "you will read this preassessmentfile carefully and analyze to identify the questions the human student could not answer."
-         "Based on these unanswered questions, you will create an initial lesson plan."
+         "Based on these unanswered questions, you will create an initial lessonplan"
          "When the teachers_agent asks you to update the lesson plan,"
-         "you will revise it according to the human student's interests,"
-         "which the teachers_agent will provide to you."
-         "After updating, you will share the revised lesson plan with the teachers_agent.",
+         "you will revise it according to the human student's interests and his/her difficulties in understanding the lesson being taught,"
+         "After updating, you will share the revised lesson plan with the teachers_agent and assessor_agent.",
     allow_delegation=False,
     verbose=True,
     memory=True,
     tools=[ file_read_tool]
 )
 assessor_agent = Agent(
-    role="you are an assessor with expertice in geometry"
-         "You will generate separate questions for human student",
-    goal="you are an expert on geometry"
-         "You will generate separate  questions on Geometry related to the lessonplan provided by the lessonplanner_agent for human student"
-         "based on the lessonplans  and from  preassessmentfile  find in {file_paths1}",
+    role="you are an assessor with expertize in geometry who generates appropriate questions for student in class 9 on triangles and their different types and theorem based on lessonplan created by the lessonplanner_agent"
+         "You will modify initial assessment questions based on changed lessonplan everytime it is changed by the lessonplanner_agent",
+    goal="to create assessment plan that a perfect to assess the student progress based on lessonplan as created by the lessonplanner_agent on triangles its types and theorem for class 9",     
     backstory="you are an expert on geometry"
-         "You will generate separate  questions on Geometry related to the lessonplan provided by the lessonplanner_agent for human student"
-         "based on the lessonplans  and from  preassessmentfile  find in {file_paths1}",
+         "Your initial assessment plan covers topics that the student was unable to understand as shown in the preassessmentfile in {file_paths1}"
+         "you will modify the assessment plan when the lessonplan changes so that the student can be properly assessed on the topics included in it"
+         "you will send the assessment plan you create to the teachers_agent for its use",
     allow_delegation=False,
     verbose=True,
     memory=True,
-    tools=[ file_read_tool]   
+    tools=[file_read_tool]   
 )
-teachers_agent=Agent(
-    role="You are a geometry teacher with a strong understanding of the subject."
-         "First, you will greet the human student upon entering the class."
-         "Then, you will carefully teach the student based on the initial lesson plan provided by the lessonplanner_agent."
-         "During the lesson, you will ask questions from the topics you are covering."
-         "The human student will respond to your questions."
-         "If the human student answers correctly, you will proceed to the next topic in the lesson plan. If the student answers incorrectly, you will go over the same topic again in detail."
-         "If the human student expresses difficulty when you ask questions, you will inquire about their interests."
-         "The human student will then share their interests with you. Based on this information, you will request the lessonplanner_agent to update the lesson plan according to the student's interests."
-         "Once the updated lesson plan is provided by the lessonplanner_agent, you will continue teaching according to the new plan."
-         "Note that you will access the human student's responses using the ShepherdInputTool() and perform actions accordingly based on the student's replies.",
-    goal="You are a geometry teacher with a strong understanding of the subject."
-         "First, you will greet the human student upon entering the class."
-         "Then, you will carefully teach the student based on the initial lesson plan provided by the lessonplanner_agent."
-         "During the lesson, you will ask questions from the topics you are covering."
-         "The human student will respond to your questions."
-         "If the human student answers correctly, you will proceed to the next topic in the lesson plan. If the student answers incorrectly, you will go over the same topic again in detail."
-         "If the human student expresses difficulty when you ask questions, you will inquire about their interests."
-         "The human student will then share their interests with you. Based on this information, you will request the lessonplanner_agent to update the lesson plan according to the student's interests."
-         "Once the updated lesson plan is provided by the lessonplanner_agent, you will continue teaching according to the new plan."
-         "Note that you will access the human student's responses using the ShepherdInputTool() and perform actions accordingly based on the student's replies.",
-             
-    backstory="You are a geometry teacher with a strong understanding of the subject."
-         "First, you will greet the human student upon entering the class."
-         "Then, you will carefully teach the student based on the initial lesson plan provided by the lessonplanner_agent."
-         "During the lesson, you will ask questions from the topics you are covering."
-         "The human student will respond to your questions."
-         "If the human student answers correctly, you will proceed to the next topic in the lesson plan. If the student answers incorrectly, you will go over the same topic again in detail."
-         "If the human student expresses difficulty when you ask questions, you will inquire about their interests."
-         "The human student will then share their interests with you. Based on this information, you will request the lessonplanner_agent to update the lesson plan according to the student's interests."
-         "Once the updated lesson plan is provided by the lessonplanner_agent, you will continue teaching according to the new plan."
-         "Note that you will access the human student's responses using the ShepherdInputTool() and perform actions accordingly based on the student's replies.",
+teachers_agent = Agent(
+    role="Interactive Geometry Teacher who uses the lessonplan and assessmentplan provided by the lessonplanner_agent and the assessor_agent respectively to interact with the human student and teach them about triangles its types and theorem for class 9",
+    goal="Teach geometry interactively,adapting to human student's interests and comprehension levels, using analogies when needed.",
+    backstory="A compassionate teacher who adjusts lesson delivery based on student responses, particularly about triangles their types and theorems for class 9."
+              "you will start with a greeting and start teaching based on the lessonplan and assessment plan given by the lessonplanner_agent and assessor_agent"
+              "you will check that the student understand what you are teaching and clarify topics that student failed to understand"
+              "You will give primary importance to the student's inputs and respond to their doubts and then proceed with remainder part of the lesson"
+              "When the student has difficulty in understanding find out about their other interests and learning preferences so that you can teach appropriately"
+              "then you will Ask the lessonplanner_agent and assessor_agent to modify lessonplan and assessmentplan as required to ensure that the student is able to make progress and understand the lesson"
+              "Always pay careful attention to the student's input and modify your teaching according to the student's reading ability and interest in the subject",
     allow_delegation=False,
     verbose=True,
     memory=True,
-    tools=[ file_read_tool,shepherd_input_tool] 
-)
+    tools=[ file_read_tool] 
+)  
 ##tasks of agents are define one by one
 lessonplanner_docs_task= Task(
     description="You are a LessonPlanner_Agent with extensive knowledge in geometry."
@@ -155,39 +102,82 @@ assessor_docs_task= Task(
     step_callback=my_intermediate_step_callback
 )
 teachers_docs_task= Task(
-    description="You are a geometry teacher with a strong understanding of the subject."
-         "First, you will greet the human student upon entering the class."
-         "Then, you will carefully teach the student based on the initial lesson plan provided by the lessonplanner_agent."
-         "During the lesson, you will ask questions from the topics you are covering."
-         "The human student will respond to your questions."
-         "If the human student answers correctly, you will proceed to the next topic in the lesson plan. If the student answers incorrectly, you will go over the same topic again in detail."
-         "If the human student expresses difficulty when you ask questions, you will inquire about their interests."
-         "The human student will then share their interests with you. Based on this information, you will request the lessonplanner_agent to update the lesson plan according to the student's interests."
-         "Once the updated lesson plan is provided by the lessonplanner_agent, you will continue teaching according to the new plan."
-         "Note that you will access the human student's responses using the ShepherdInputTool() and perform actions accordingly based on the student's replies.",
-    expected_output="You are a geometry teacher with a strong understanding of the subject."
-         "First, you will greet the human student upon entering the class."
-         "Then, you will carefully teach the student based on the initial lesson plan provided by the lessonplanner_agent."
-         "During the lesson, you will ask questions from the topics you are covering."
-         "The human student will respond to your questions."
-         "If the human student answers correctly, you will proceed to the next topic in the lesson plan. If the student answers incorrectly, you will go over the same topic again in detail."
-         "If the human student expresses difficulty when you ask questions, you will inquire about their interests."
-         "The human student will then share their interests with you. Based on this information, you will request the lessonplanner_agent to update the lesson plan according to the student's interests."
-         "Once the updated lesson plan is provided by the lessonplanner_agent, you will continue teaching according to the new plan."
-         "Note that you will access the human student's responses using the ShepherdInputTool() and perform actions accordingly based on the student's replies.",
+    description= "Start the class with a greeting and describe the goal of lesson"
+        "Engage human student by asking him to share what he knows. If he shows confusion, prompt him to share an interest (e.g., music, animals, or any other topic) with ShepherdInputTool. "
+        "Once an interest is provided, request an update from LessonPlanner_Agent to revise the lesson plan using this interest. "
+        "After receiving the updated plan, proceed with teaching using analogies specific to Shepherd’s interest to make geometry concepts clearer. Remember that you do not need to repeat the greeting every time you engage with the student till the session is complete.",
+    expected_output="A responsive interactive lesson with explanations using analogies based on Shepherd’s interest, whatever that may be."
+                    "You will give primary importance to the student's inputs and respond to their doubts and then proceed with remainder part of the lesson",   
     agent=teachers_agent,
-    llm = ChatOpenAI(temperature=0.75, model_name="gpt-4o"),
+    human_input=True,
+    llm = ChatOpenAI(temperature=0.75,model_name="gpt-4o"),
     step_callback=my_intermediate_step_callback
 )
 ## crew is start action
 crew = Crew(
     agents=[lessonplanner_agent,assessor_agent,teachers_agent],
     tasks=[lessonplanner_docs_task,assessor_docs_task,teachers_docs_task],
+    callbacks=[my_intermediate_step_callback],
     verbose=True
-     
 )
-result=crew.kickoff(inputs={
-    'file_paths1': '/home/shovan/Videos/shepherdpreassessment.txt'
-})
-##to show the output in streamlit
-st.write(result)
+class InteractionManager:
+    def __init__(self, crew, max_interactions=10, passing_score=85):
+        self.crew = crew
+        self.max_interactions = max_interactions
+        self.passing_score = passing_score
+        self.interactions = 0
+        self.assessment_score = 0
+
+    def update_assessment_score(self, score):
+        self.assessment_score = score
+        print(f"Updated assessment score: {score}")
+    
+    def increment_interaction(self):
+        self.interactions += 1
+        print(f"Interaction count: {self.interactions}")
+
+    def should_continue(self):
+        # Check if maximum interactions reached or passing score achieved
+        if self.interactions >= self.max_interactions:
+            print("Maximum interactions reached.")
+            return False
+        if self.assessment_score >= self.passing_score:
+            print("Student has passed the assessment.")
+            return False
+        return True
+
+# Initiating the interaction manager with Crew AI system
+interaction_manager = InteractionManager(crew)
+
+# Start the loop for continuous interaction
+while interaction_manager.should_continue():
+    # Kick off the interaction with the student and teacher agent
+    result = crew.kickoff(inputs={'file_paths1': '/home/shovan/Videos/shepherdpreassessment.txt'})
+    
+    # Debug print to see what the result looks like
+    print("Result:", result)  # Check the content of the result
+    
+    # Check if result is a string and contains "assessment_score"
+    if isinstance(result, str):
+        # Example: If result is a long string, you need to extract the score using regex or string manipulation
+        # For instance, if the result has a pattern "assessment_score: 72", you could try:
+        score_match = re.search(r"assessment_score\s*[:]\s*(\d+)", result)
+        if score_match:
+            updated_score = int(score_match.group(1))  # Extract score from the matched group
+        else:
+            updated_score = 0  # Default score if not found
+    else:
+        # If it's already a dictionary, extract the score as before
+        updated_score = result.get('assessment_score', 0)
+    
+    # Update the assessment score
+    interaction_manager.update_assessment_score(updated_score)
+    
+    # Increment interaction count
+    interaction_manager.increment_interaction()
+
+    # Check if the loop should continue
+    if not interaction_manager.should_continue():
+        break
+
+print("Lesson completed.")
