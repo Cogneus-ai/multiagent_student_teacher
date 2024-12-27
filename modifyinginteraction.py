@@ -90,9 +90,9 @@ os.environ["OPENAI_MODEL_NAME"] = "gpt-4o"
 
 st.sidebar.title("Select Student")
 students = {
-    "shepherd": "/home/shovan/Videos/shepherdpreassessment.txt", 
-    "ollie": "/path/to/b_preassessment.txt", 
-    "lucy": "/path/to/c_preassessment.txt"
+    "shepherd": "shepherdpreassessment.txt", 
+    "ollie": "ollieprassessment.txt", 
+    "lucy": "lucypreassessment.txt"
 }
 
 selected_student = st.sidebar.radio("Choose a Student:", list(students.keys()))
