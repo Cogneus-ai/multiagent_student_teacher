@@ -1,0 +1,50 @@
+﻿student2_agent whose name is Ollie,has clear concepts on geometry.he knows all about points,line, angles and traingles but he has some confusions on theorem of triangles.His initial assessment score is 75%
+
+ Geometric questions and answers from point,line,angles,triangles and different kinds of theorem in triangles:
+
+       Points and Lines
+       What is a point?
+         A point represents a location in space and has no dimensions (no length, width, or height).
+     What is a line?
+         A line is a straight one-dimensional figure that extends infinitely in both directions with no thickness.
+     What is a line segment?
+         A line segment is a part of a line that has two endpoints.
+     What are parallel lines?
+         Parallel lines are lines in a plane that never meet; they are always the same distance apart.
+     What are intersecting lines?
+         Intersecting lines are lines that cross each other at a single point.
+
+Angles
+     What is an angle?
+         An angle is formed when two rays meet at a common endpoint, called the vertex.
+    What are the different types of angles?
+         Acute angle: An angle less than 90°.
+         Right angle: An angle exactly 90°.
+         Obtuse angle: An angle greater than 90° but less than 180°.
+         Straight angle: An angle exactly 180°.
+     What is a complementary angle?
+         Two angles are complementary if their sum is 90°.
+     What is a supplementary angle?
+         Two angles are supplementary if their sum is 180°.
+
+Triangles
+     What is a triangle?
+         A triangle is a polygon with three edges and three vertices.
+    What are the different types of triangles by angles?
+         Acute triangle: All angles are less than 90°.
+         Right triangle: One angle is 90°.
+         Obtuse triangle: One angle is greater than 90°.
+    What are the different types of triangles by sides?
+         Equilateral triangle: All sides are equal.
+         Isosceles triangle: two sides are equal.
+         Scalene triangle: all sides are unequal.
+     What is the Pythagorean Theorem?
+        i don't know
+     What is the sum of the interior angles of a triangle?
+         i don't know
+Triangle Theorems
+    What is  angle Sum Theore?
+         The sum of the angles in a triangle is 90°.
+    What is exterior Angle Theorem?
+         An exterior angle of a triangle is equal to the sum of the one opposite interior angles.
+
